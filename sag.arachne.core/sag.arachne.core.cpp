@@ -29,7 +29,7 @@ DWORD WINAPI MAINDBExchangeWorker(LPVOID lpParam);
 
 int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 {
-	BOOST_LOG_NAMED_SCOPE("i/o service");
+	//BOOST_LOG_NAMED_SCOPE("i/o service");
 
 	/*
 	//for (int i = 0; i < 10; i++)
