@@ -6,6 +6,12 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sag.arachne", "sag.arachne.vcxproj", "{17B33E1C-E71D-4FC3-B147-7B6D5468170E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sag.arachne.core", "sag.arachne.core\sag.arachne.core.vcxproj", "{2090037D-E6C6-46BD-9A6F-026DE220EA1C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{17B33E1C-E71D-4FC3-B147-7B6D5468170E} = {17B33E1C-E71D-4FC3-B147-7B6D5468170E}
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00} = {C2514EFA-7969-4161-964E-9FA1CC8E9A00}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sag.arachne.hwcontrol", "sag.arachne.hwcontrol\sag.arachne.hwcontrol.vcxproj", "{C2514EFA-7969-4161-964E-9FA1CC8E9A00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +37,14 @@ Global
 		{2090037D-E6C6-46BD-9A6F-026DE220EA1C}.Release|x64.Build.0 = Release|x64
 		{2090037D-E6C6-46BD-9A6F-026DE220EA1C}.Release|x86.ActiveCfg = Release|Win32
 		{2090037D-E6C6-46BD-9A6F-026DE220EA1C}.Release|x86.Build.0 = Release|Win32
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Debug|x64.ActiveCfg = Debug|x64
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Debug|x64.Build.0 = Debug|x64
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Debug|x86.ActiveCfg = Debug|Win32
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Debug|x86.Build.0 = Debug|Win32
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Release|x64.ActiveCfg = Release|x64
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Release|x64.Build.0 = Release|x64
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Release|x86.ActiveCfg = Release|Win32
+		{C2514EFA-7969-4161-964E-9FA1CC8E9A00}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

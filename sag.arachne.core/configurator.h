@@ -1,11 +1,11 @@
 #pragma once
 
+#include "stdafx.h"
 #include <atlbase.h>
 #include <atlconv.h>
-#include "stdafx.h"
 
-#include "tinyxml/tinyxml.h"
-#pragma comment (lib, "tinyxml/tinyxml.lib")
+#include "../tinyxml/tinyxml.h"
+#pragma comment (lib, "../tinyxml/tinyxml.lib")
 
 struct LoggerParameters {
 	std::string LogFileExtention = "_%3N.log";
@@ -47,7 +47,7 @@ private:
 	SERVICE_TYPES _service_type;
 	int _service_control_port;
 	std::string _service_name;
-	const std::string _config_file_name = "service.config";
+	const std::string _config_file_name = "core.config";
 
 	LoggerParameters _logger;
 	PLCParameters _plc;

@@ -4,9 +4,6 @@
 //															//
 //**********************************************************//
 
-#include <Windows.h>
-#include <tchar.h>
-
 #include "stdafx.h"
 #include "configurator.h"
 #include "logger.h"

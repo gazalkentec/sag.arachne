@@ -1,12 +1,12 @@
 #pragma once
 
-#pragma comment (lib, "../libnodave/libnodave.lib")
-
+#include <Windows.h>
+#include <tchar.h>
 #include "targetver.h"
 #include <stdio.h>
 #include <tchar.h>
 #include <fstream>
-#include "../sqlite/sqlite3.h"
+#include <iostream>
 
 enum DB_TYPES {
 	DB_ORACLE = 0,
@@ -26,3 +26,15 @@ enum SERVICE_TYPES {
 	ARACHNE_TERMAL_CONTROL = 3,
 	ARACHNE_BUZZER_CONTROL = 4
 };
+
+inline LPTSTR ExtractFilePath(LPCTSTR FileName, LPTSTR buf)
+{
+	int i, len = lstrlen(FileName);
+	for (i = len - 1; i >= 0; i--)
+	{
+		if (FileName[i] == _T('\\'))
+			break;
+	}
+	lstrcpyn(buf, FileName, i + 2);
+	return buf;
+}
