@@ -17,16 +17,21 @@ SERVICE_STATUS_HANDLE	g_StatusHandle = NULL;
 HANDLE					g_ServiceStopEvent = INVALID_HANDLE_VALUE;
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
-
 VOID WINAPI ServiceCtrlHandler(DWORD);
 
 DWORD WINAPI ServiceWorkerThread(LPVOID lpParam);
 DWORD WINAPI PLCExchangeWorker(LPVOID lpParam);
 DWORD WINAPI MAINDBExchangeWorker(LPVOID lpParam);
 
+int InstallService();
+int RemoveService();
+int StartService();
+
+LPTSTR SERVICE_PATH;
+
 int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 {
-	//BOOST_LOG_NAMED_SCOPE("i/o service");
+	SERVICE_PATH = LPTSTR(argv[0]);
 
 	/*
 	//for (int i = 0; i < 10; i++)
@@ -78,24 +83,36 @@ int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 
 	if (!config.IsLoaded())
 	{
-		//_ERROR << "Config is not loaded! Server is unable to start...";
 		return -1;
 	}
-	else _INFO << "Config is loaded successfully. Server is try to start...";
+	else _INFO << "Config is loaded successfully.";
 
-	SERVICE_TABLE_ENTRY ServiceTable[] =
+	if (argc - 1 == 0)
 	{
-		{ LPWSTR(config.ServiceName().c_str()), (LPSERVICE_MAIN_FUNCTION)ServiceMain },
-		{ NULL, NULL }
-	};
+		SERVICE_TABLE_ENTRY ServiceTable[] =
+		{
+			{ LPWSTR((config.ServiceName()).c_str()), (LPSERVICE_MAIN_FUNCTION)ServiceMain },
+			{ NULL, NULL }
+		};
 
-	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
-	{
-		_ERROR << "Server start error! Shutdown!";
-		return GetLastError();
+		if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
+		{
+			_ERROR << "Server start error! Shutdown!";
+			return GetLastError();
+		}
+
+		_INFO << "Server is stopped...";
+
 	}
-
-	_INFO << "Server is stopped...";
+	else if (wcscmp(argv[argc - 1], _T("install")) == 0) {
+		InstallService();
+	}
+	else if (wcscmp(argv[argc - 1], _T("remove")) == 0) {
+		RemoveService();
+	}
+	else if (wcscmp(argv[argc - 1], _T("start")) == 0) {
+		StartService();
+	}
 
 	return ERROR_SUCCESS;
 }
@@ -112,13 +129,13 @@ int InstallService()
 
 	SC_HANDLE hService = CreateService(
 		hSCManager,
-		LPCWSTR((config.ServiceName()).c_str()),
-		LPCWSTR((config.ServiceName()).c_str()),
+		_T("sag.arachne.core"),//LPTSTR((config.ServiceName()).c_str()),
+		_T("sag.arachne.core"),//LPTSTR((config.ServiceName()).c_str()),
 		SERVICE_ALL_ACCESS,
 		SERVICE_WIN32_OWN_PROCESS,
 		SERVICE_DEMAND_START,
 		SERVICE_ERROR_NORMAL,
-		LPCWSTR((config.ArchivePath()).c_str()),
+		SERVICE_PATH,
 		NULL, NULL, NULL, NULL, NULL);
 
 	if (!hService)
@@ -135,7 +152,7 @@ int InstallService()
 			0,
 			NULL);
 
-		_ERROR << "  ";
+		_ERROR << "Create service error!";
 		_ERROR << errText;
 
 		CloseServiceHandle(hSCManager);
@@ -146,7 +163,67 @@ int InstallService()
 	CloseServiceHandle(hService);
 	CloseServiceHandle(hSCManager);
 
-	_INFO << "  ";
+	_INFO << "Create service success.";
+
+	return ERROR_SUCCESS;
+}
+
+int RemoveService()
+{
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (!hSCManager)
+	{
+		_ERROR << "Can't open Service Control Manager";
+		return -1;
+	}
+
+	SC_HANDLE hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_STOP | DELETE);
+
+	if (!hService)
+	{
+		_ERROR << "Can't remove service!";
+		CloseServiceHandle(hSCManager);
+		return -1;
+	}
+
+	DeleteService(hService);
+	CloseServiceHandle(hService);
+	CloseServiceHandle(hSCManager);
+
+	_INFO << "Service remove success.";
+	return ERROR_SUCCESS;
+}
+
+int StartService()
+{
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (!hSCManager)
+	{
+		_ERROR << "Can't open Service Control Manager";
+		return -1;
+	}
+
+	SC_HANDLE hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
+
+	if (!hService)
+	{
+		CloseServiceHandle(hSCManager);
+
+		_ERROR << "Can't start service!";
+		return -1;
+	}
+
+	if (!StartService(hService, 0, NULL))
+	{
+		CloseServiceHandle(hService);
+		CloseServiceHandle(hSCManager);
+
+		_ERROR << "Error starting service!";
+		return -1;
+	}
+
+	CloseServiceHandle(hService);
+	CloseServiceHandle(hSCManager);
 
 	return ERROR_SUCCESS;
 }
