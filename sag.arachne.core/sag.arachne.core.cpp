@@ -100,6 +100,56 @@ int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 	return ERROR_SUCCESS;
 }
 
+int InstallService()
+{
+	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+
+	if (!hSCManager)
+	{
+		_ERROR << "Can't open Service Control Manager";
+		return -1;
+	}
+
+	SC_HANDLE hService = CreateService(
+		hSCManager,
+		LPCWSTR((config.ServiceName()).c_str()),
+		LPCWSTR((config.ServiceName()).c_str()),
+		SERVICE_ALL_ACCESS,
+		SERVICE_WIN32_OWN_PROCESS,
+		SERVICE_DEMAND_START,
+		SERVICE_ERROR_NORMAL,
+		LPCWSTR((config.ArchivePath()).c_str()),
+		NULL, NULL, NULL, NULL, NULL);
+
+	if (!hService)
+	{
+		DWORD errCode = GetLastError();
+		char *errText;
+
+		FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL,
+			errCode,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&errText,
+			0,
+			NULL);
+
+		_ERROR << "  ";
+		_ERROR << errText;
+
+		CloseServiceHandle(hSCManager);
+
+		return -1;
+	}
+
+	CloseServiceHandle(hService);
+	CloseServiceHandle(hSCManager);
+
+	_INFO << "  ";
+
+	return ERROR_SUCCESS;
+}
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 {
