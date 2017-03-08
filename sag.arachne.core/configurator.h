@@ -2,9 +2,9 @@
 
 #include "stdafx.h"
 #include <atlbase.h>
-#include <atlconv.h>
 
 #include "../tinyxml/tinyxml.h"
+#include <string>
 #pragma comment (lib, "../tinyxml/tinyxml.lib")
 
 struct LoggerParameters {
@@ -43,6 +43,8 @@ class Configurator
 {
 private:
 
+	TCHAR *SERVICE_PATH = nullptr;
+
 	std::string _path;
 	SERVICE_TYPES _service_type;
 	int _service_control_port;
@@ -60,30 +62,30 @@ private:
 public:
 
 	/* CONFIG */
-	bool IsLoaded() { return _is_loaded; };
+	bool IsLoaded() const { return _is_loaded; };
 
 	/* SERVICE */
-	std::string ServicePath() { return _path; };
-	std::string ServiceName() { return _service_name; }
+	std::string ServicePath() const { return _path; };
+	std::string ServiceName() const { return _service_name; }
+	TCHAR
 
 	/* LOGGER */
-	std::string LogName() { return _logger.LogName; };
-	std::string LogFile() { return _logger.LogFilePath + _logger.LogFileName; };
-	std::string ArchivePath() { return _logger.ArchivePath; };
+	std::string LogName() const { return _logger.LogName; };
+	std::string LogFile() const { return _logger.LogFilePath + _logger.LogFileName; };
+	std::string ArchivePath() const { return _logger.ArchivePath; };
 
-	int RotateSizeMB() { return _logger.LogRotateSizeMB; };
-	int ArchiveSizeMB() { return _logger.ArchiveSizeMB; };
-	int MinDriveFreeSpace() { return _logger.MinDriveFreeSpace; };
+	int RotateSizeMB() const { return _logger.LogRotateSizeMB; };
+	int ArchiveSizeMB() const { return _logger.ArchiveSizeMB; };
+	int MinDriveFreeSpace() const { return _logger.MinDriveFreeSpace; };
 
 	/* PLC */
-	int PLCPollPeriodMSec() { return _plc.PLCPollPeriodMSec; };
+	int PLCPollPeriodMSec() const { return _plc.PLCPollPeriodMSec; };
 
 	/* MAINDB */
-	int MainDBPollPeriodMSec() { return _maindb.MainDBPollPeriodMSec; };
+	int MainDBPollPeriodMSec() const { return _maindb.MainDBPollPeriodMSec; };
 
-	Configurator()
+	Configurator(): _service_type(SERVICE_TYPES::ARACHNE_NODE), _service_control_port(5555), _service_name_c(), _is_loaded(false), string(0)
 	{
-		_is_loaded = false;
 	}
 
 	bool LoadConfig(int argc, TCHAR *argv[], TCHAR *env[])
@@ -92,7 +94,7 @@ public:
 		TCHAR szFileName[MAX_PATH];
 		TCHAR szPath[MAX_PATH];
 
-		GetModuleFileName(0, szFileName, MAX_PATH);
+		GetModuleFileName(nullptr, szFileName, MAX_PATH);
 		ExtractFilePath(szFileName, szPath);
 
 		std::wstring buff = szPath;
@@ -109,7 +111,7 @@ public:
 			{
 				try
 				{
-					TiXmlElement *service = config.FirstChildElement("service");
+					auto service = config.FirstChildElement("service");
 
 					if (service)
 					{
@@ -130,26 +132,26 @@ public:
 								_service_type = SERVICE_TYPES::ARACHNE_PLC_CONTROL;
 								_service_control_port = atoi(service->Attribute("command_port"));
 
-								TiXmlElement *logger = service->FirstChildElement("log");
+								auto logger = service->FirstChildElement("log");
 								if (logger)
 								{
 									_logger.LogName = _service_name;
 
 									_logger.LogFileExtention = logger->Attribute("file_extension_pattern");
 
-									std::string buff = logger->Attribute("alter_file_name");
-									if (!buff.empty()) {
-										_logger.LogFileName = buff;
+									std::string _buff = logger->Attribute("alter_file_name");
+									if (!_buff.empty()) {
+										_logger.LogFileName = _buff;
 									}
 									else _logger.LogFileName = _logger.LogName + _logger.LogFileExtention;
 
-									buff.clear();
-									buff = logger->Attribute("alter_path");
-									if (!buff.empty()) {
-										if (buff.substr(0, 2) == ".\\") {
-											_logger.LogFilePath = _path + buff.substr(2, buff.length());
+									_buff.clear();
+									_buff = logger->Attribute("alter_path");
+									if (!_buff.empty()) {
+										if (_buff.substr(0, 2) == ".\\") {
+											_logger.LogFilePath = _path + _buff.substr(2, _buff.length());
 										}
-										else _logger.LogFilePath = buff;
+										else _logger.LogFilePath = _buff;
 									}
 									else _logger.LogFilePath = _path;
 
@@ -159,7 +161,7 @@ public:
 
 									_logger.ArchivePath = logger->Attribute("archive_path");
 
-									TiXmlElement *plc = service->FirstChildElement("plc");
+									auto plc = service->FirstChildElement("plc");
 									if (plc)
 									{
 										_plc.PLCType = static_cast<PLC_TYPES>(atoi(plc->Attribute("type")));
@@ -167,7 +169,7 @@ public:
 										_plc.PLCPortNumber = atoi(plc->Attribute("port"));
 										_plc.PLCIPAddress = plc->Attribute("ip_address");
 
-										TiXmlElement *localdb = service->FirstChildElement("localdb");
+										auto localdb = service->FirstChildElement("localdb");
 										if (localdb)
 										{
 
@@ -187,13 +189,13 @@ public:
 
 											case DB_TYPES::DB_SQLITE:
 
-												buff.clear();
-												buff = localdb->Attribute("alter_path");
-												if (!buff.empty()) {
-													if (buff.substr(0, 2) == ".\\") {
-														_localdb.LocalDBPath = _path + buff.substr(2, buff.length());
+												_buff.clear();
+												_buff = localdb->Attribute("alter_path");
+												if (!_buff.empty()) {
+													if (_buff.substr(0, 2) == ".\\") {
+														_localdb.LocalDBPath = _path + _buff.substr(2, _buff.length());
 													}
-													else _localdb.LocalDBPath = buff;
+													else _localdb.LocalDBPath = _buff;
 												}
 												else _localdb.LocalDBPath = _path;
 
@@ -207,7 +209,7 @@ public:
 												goto EXIT;
 											}
 
-											TiXmlElement *maindb = service->FirstChildElement("maindb");
+											auto maindb = service->FirstChildElement("maindb");
 											if (maindb)
 											{
 												switch (static_cast<DB_TYPES>(atoi(maindb->Attribute("type")))) {

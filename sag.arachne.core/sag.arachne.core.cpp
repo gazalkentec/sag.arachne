@@ -13,7 +13,7 @@ using namespace std;
 Configurator config;
 
 SERVICE_STATUS			g_ServiceStatus = { 0 };
-SERVICE_STATUS_HANDLE	g_StatusHandle = NULL;
+SERVICE_STATUS_HANDLE	g_StatusHandle = nullptr;
 HANDLE					g_ServiceStopEvent = INVALID_HANDLE_VALUE;
 
 VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv);
@@ -91,8 +91,8 @@ int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 	{
 		SERVICE_TABLE_ENTRY ServiceTable[] =
 		{
-			{ LPWSTR((config.ServiceName()).c_str()), (LPSERVICE_MAIN_FUNCTION)ServiceMain },
-			{ NULL, NULL }
+			{ LPWSTR((config.ServiceName()).c_str()), static_cast<LPSERVICE_MAIN_FUNCTION>(ServiceMain) },
+			{nullptr, nullptr }
 		};
 
 		if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
@@ -119,7 +119,7 @@ int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 
 int InstallService()
 {
-	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_CREATE_SERVICE);
+	SC_HANDLE hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE);
 
 	if (!hSCManager)
 	{
@@ -131,7 +131,7 @@ int InstallService()
 	//TCHAR buf[] = TEXT(config.ServiceName().begin(), config.ServiceName().end());
 	TCHAR buf[] = _T("sag.arachne.core");
 
-	SC_HANDLE hService = CreateService(
+	auto hService = CreateService(
 		hSCManager,
 		buf,
 		buf,
@@ -140,7 +140,7 @@ int InstallService()
 		SERVICE_DEMAND_START,
 		SERVICE_ERROR_NORMAL,
 		SERVICE_PATH,
-		NULL, NULL, NULL, NULL, NULL);
+		nullptr, nullptr, nullptr, nullptr, nullptr);
 
 	if (!hService)
 	{
@@ -149,12 +149,12 @@ int InstallService()
 
 		FormatMessage(
 			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			NULL,
+			nullptr,
 			errCode,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPTSTR)&errText,
+			reinterpret_cast<LPTSTR>(&errText),
 			0,
-			NULL);
+			nullptr);
 
 		_ERROR << "Create service error!";
 		_ERROR << errText;
@@ -174,14 +174,14 @@ int InstallService()
 
 int RemoveService()
 {
-	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
 	if (!hSCManager)
 	{
 		_ERROR << "Can't open Service Control Manager";
 		return -1;
 	}
 
-	SC_HANDLE hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
+	auto hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
 
 	if (!hService)
 	{
@@ -200,14 +200,14 @@ int RemoveService()
 
 int StartService()
 {
-	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
 	if (!hSCManager)
 	{
 		_ERROR << "Can't open Service Control Manager";
 		return -1;
 	}
 
-	SC_HANDLE hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
+	auto hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
 
 	if (!hService)
 	{
@@ -217,7 +217,7 @@ int StartService()
 		return -1;
 	}
 
-	if (!StartService(hService, 0, NULL))
+	if (!StartService(hService, 0, nullptr))
 	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCManager);
@@ -238,7 +238,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 
 	g_StatusHandle = RegisterServiceCtrlHandler(LPWSTR(config.ServiceName().c_str()), ServiceCtrlHandler);
 
-	if (g_StatusHandle == NULL)
+	if (g_StatusHandle == nullptr)
 	{
 		_ERROR << "Server start error! Is will be stopped!";
 		goto EXIT;
@@ -264,8 +264,8 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 	//OutputDebugString(_T("My Sample Service: ServiceMain: Performing Service Start Operations"));
 
 	// Create stop event to wait on later.
-	g_ServiceStopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	if (g_ServiceStopEvent == NULL)
+	g_ServiceStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+	if (g_ServiceStopEvent == nullptr)
 	{
 		//OutputDebugString(_T("My Sample Service: ServiceMain: CreateEvent(g_ServiceStopEvent) returned error"));
 
@@ -293,7 +293,7 @@ VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 	}
 
 	// Start the thread that will perform the main task of the service
-	HANDLE hThread = CreateThread(NULL, 0, ServiceWorkerThread, NULL, 0, NULL);
+	HANDLE hThread = CreateThread(nullptr, 0, ServiceWorkerThread, nullptr, 0, nullptr);
 	// Wait until our worker thread exits effectively signaling that the service needs to stop
 	WaitForSingleObject(hThread, INFINITE);
 
@@ -365,9 +365,9 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 	_INFO << "main worker is running...";
 
 	// Start the thread that will perform the main task of the service
-	CreateThread(NULL, 0, MAINDBExchangeWorker, NULL, 0, NULL);
+	CreateThread(nullptr, 0, MAINDBExchangeWorker, nullptr, 0, nullptr);
 	// Start the thread that will perform the main task of the service
-	CreateThread(NULL, 0, PLCExchangeWorker, NULL, 0, NULL);
+	CreateThread(nullptr, 0, PLCExchangeWorker, nullptr, 0, nullptr);
 	//  Periodically check if the service has been requested to stop
 	while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
 	{

@@ -7,7 +7,7 @@ int main()
 
 	std::cout << "hello" << std::endl;
 
-	int i = 0;
+	auto i = 0;
 
 	std::cin >> i;
 

@@ -3,10 +3,6 @@
 #include <Windows.h>
 #include <tchar.h>
 #include "targetver.h"
-#include <stdio.h>
-#include <tchar.h>
-#include <fstream>
-#include <iostream>
 
 enum DB_TYPES {
 	DB_ORACLE = 0,
@@ -21,10 +17,11 @@ enum PLC_TYPES {
 
 enum SERVICE_TYPES {
 	ARACHNE_NODE = 0,
-	ARACHNE_PLC_CONTROL = 1,
+	ARACHNE_PLC_EXCHANGER = 1,
 	ARACHNE_WEIGHT_CONTROL = 2,
 	ARACHNE_TERMAL_CONTROL = 3,
-	ARACHNE_BUZZER_CONTROL = 4
+	ARACHNE_BUZZER_CONTROL = 4,
+	ARACHNE_PLC_CONTROL = 5
 };
 
 inline LPTSTR ExtractFilePath(LPCTSTR FileName, LPTSTR buf)
