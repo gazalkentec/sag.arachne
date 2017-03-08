@@ -33,50 +33,6 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 {
 	SERVICE_PATH = static_cast<wchar_t*>(argv[0]);
 
-	/*
-	//for (int i = 0; i < 10; i++)
-	//{
-	//	std::cout << "\a" << std::endl;
-
-	//	Sleep(1000);
-	//}
-
-	//std::cout << "Parameters count: " << argc << std::endl;
-
-	//std::cout << "Parameters: " << std::endl;
-
-	//for (int i = 0; argv[i]; i++)
-	//{
-
-	//	std::wstring buff = argv[i];
-	//
-	//	std::cout << std::string(buff.begin(), buff.end()) << std::endl;
-
-	//}
-
-	//std::cout << "Environment: " << std::endl;
-
-	//for (int i = 0; env[i]; i++)
-	//{
-
-	//	std::wstring buff = env[i];
-
-	//	std::cout << std::string(buff.begin(), buff.end()) << std::endl;
-
-	//std::cout << char(*env[i]);
-	//
-	//for (; *env[i]++; )
-	//{
-	//	std::cout << char(*env[i]);
-	//}
-
-	//std::cout << std::endl;
-	//}
-
-	//system("PAUSE >> VOID");
-
-	//return(EXIT_SUCCESS); */
-
 	config.LoadConfig(argc, argv, env);
 
 	if (config.IsLoaded())
@@ -85,13 +41,13 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 
 	if (argc - 1 == 0)
 	{
-		_SERVICE_TABLE_ENTRYW ServiceTable[] =
+		SERVICE_TABLE_ENTRY ServiceTable[] =
 		{
-			{LPWSTR((config.ServiceName()).c_str()), static_cast<LPSERVICE_MAIN_FUNCTION>(ServiceMain)},
+			{LPWSTR(config.ServiceName_C()), static_cast<LPSERVICE_MAIN_FUNCTION>(ServiceMain)},
 			{nullptr, nullptr}
 		};
 
-		if (StartServiceCtrlDispatcherW(ServiceTable) == FALSE)
+		if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 		{
 			_ERROR << "Server start error! Shutdown!";
 			return GetLastError();
@@ -124,10 +80,6 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 			_ERROR << "Can't open Service Control Manager";
 			return -1;
 		}
-
-		//TCHAR buf[] = TEXT("sag.arachne.core");
-		//TCHAR buf[] = TEXT(config.ServiceName().begin(), config.ServiceName().end());
-		//TCHAR buf[] = _T("sag.arachne.core");
 
 		auto hService = CreateService(
 			hSCManager,
@@ -179,7 +131,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 			return -1;
 		}
 
-		auto hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
+		auto hService = OpenService(hSCManager, config.ServiceName_C(), SERVICE_STOP | DELETE);
 
 		if (!hService)
 		{
@@ -205,7 +157,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 			return -1;
 		}
 
-		auto hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
+		auto hService = OpenService(hSCManager, config.ServiceName_C(), SERVICE_START);
 
 		if (!hService)
 		{
@@ -290,8 +242,10 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 			//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
 		}
 
+		_INFO << "Server is started successfully. Starting worker threads...";
+
 		// Start the thread that will perform the main task of the service
-		HANDLE hThread = CreateThread(nullptr, 0, ServiceWorkerThread, nullptr, 0, nullptr);
+		auto hThread = CreateThread(nullptr, 0, ServiceWorkerThread, nullptr, 0, nullptr);
 		// Wait until our worker thread exits effectively signaling that the service needs to stop
 		WaitForSingleObject(hThread, INFINITE);
 
@@ -360,7 +314,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 	DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 	{
 
-		_INFO << "main worker is running...";
+		_INFO << "main worker is starting...";
 
 		// Start the thread that will perform the main task of the service
 		CreateThread(nullptr, 0, MAINDBExchangeWorker, nullptr, 0, nullptr);
@@ -384,7 +338,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 	DWORD WINAPI PLCExchangeWorker(LPVOID lpParam)
 	{
 
-		_INFO << "PLC exchange worker is running...";
+		_INFO << "PLC exchange worker is starting...";
 
 		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
 		{
@@ -402,7 +356,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 	DWORD WINAPI MAINDBExchangeWorker(LPVOID lpParam)
 	{
 
-		_INFO << "MainDB worker is running...";
+		_INFO << "MainDB worker is starting...";
 
 		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
 		{
