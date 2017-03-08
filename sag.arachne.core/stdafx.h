@@ -3,6 +3,11 @@
 #include <Windows.h>
 #include <tchar.h>
 #include "targetver.h"
+#include <string>
+#include <atlbase.h>
+#include "atlstr.h"  
+#include "comutil.h" 
+
 
 enum DB_TYPES {
 	DB_ORACLE = 0,

@@ -27,11 +27,11 @@ int InstallService();
 int RemoveService();
 int StartService();
 
-LPTSTR SERVICE_PATH;
+wchar_t* SERVICE_PATH;
 
-int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
+int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 {
-	SERVICE_PATH = LPTSTR(argv[0]);
+	SERVICE_PATH = static_cast<wchar_t*>(argv[0]);
 
 	/*
 	//for (int i = 0; i < 10; i++)
@@ -79,342 +79,340 @@ int _tmain(int argc, TCHAR *argv[], TCHAR *env[])
 
 	config.LoadConfig(argc, argv, env);
 
-	//loginfo << "start";
-
-	if (!config.IsLoaded())
-	{
-		return -1;
-	}
-	else _INFO << "Config is loaded successfully.";
+	if (config.IsLoaded())
+	_INFO << "Config is loaded successfully.";
+	else return -1;
 
 	if (argc - 1 == 0)
 	{
-		SERVICE_TABLE_ENTRY ServiceTable[] =
+		_SERVICE_TABLE_ENTRYW ServiceTable[] =
 		{
-			{ LPWSTR((config.ServiceName()).c_str()), static_cast<LPSERVICE_MAIN_FUNCTION>(ServiceMain) },
-			{nullptr, nullptr }
+			{LPWSTR((config.ServiceName()).c_str()), static_cast<LPSERVICE_MAIN_FUNCTION>(ServiceMain)},
+			{nullptr, nullptr}
 		};
 
-		if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
+		if (StartServiceCtrlDispatcherW(ServiceTable) == FALSE)
 		{
 			_ERROR << "Server start error! Shutdown!";
 			return GetLastError();
 		}
 
 		_INFO << "Server is stopped...";
-
 	}
-	else if (wcscmp(argv[argc - 1], _T("install")) == 0) {
+	else if ((wcscmp(argv[argc - 1], _T("install")) == 0) || (wcscmp(argv[argc - 1], _T("i")) == 0))
+	{
 		InstallService();
 	}
-	else if (wcscmp(argv[argc - 1], _T("remove")) == 0) {
+	else if ((wcscmp(argv[argc - 1], _T("remove")) == 0) || (wcscmp(argv[argc - 1], _T("r")) == 0))
+	{
 		RemoveService();
 	}
-	else if (wcscmp(argv[argc - 1], _T("start")) == 0) {
+	else if ((wcscmp(argv[argc - 1], _T("start")) == 0) || (wcscmp(argv[argc - 1], _T("s")) == 0))
+	{
 		StartService();
 	}
 
 	return ERROR_SUCCESS;
 }
 
-int InstallService()
-{
-	SC_HANDLE hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE);
-
-	if (!hSCManager)
+	int InstallService()
 	{
-		_ERROR << "Can't open Service Control Manager";
-		return -1;
-	}
+		auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_CREATE_SERVICE);
 
-	//TCHAR buf[] = TEXT("sag.arachne.core");
-	//TCHAR buf[] = TEXT(config.ServiceName().begin(), config.ServiceName().end());
-	TCHAR buf[] = _T("sag.arachne.core");
+		if (!hSCManager)
+		{
+			_ERROR << "Can't open Service Control Manager";
+			return -1;
+		}
 
-	auto hService = CreateService(
-		hSCManager,
-		buf,
-		buf,
-		SERVICE_ALL_ACCESS,
-		SERVICE_WIN32_OWN_PROCESS,
-		SERVICE_DEMAND_START,
-		SERVICE_ERROR_NORMAL,
-		SERVICE_PATH,
-		nullptr, nullptr, nullptr, nullptr, nullptr);
+		//TCHAR buf[] = TEXT("sag.arachne.core");
+		//TCHAR buf[] = TEXT(config.ServiceName().begin(), config.ServiceName().end());
+		//TCHAR buf[] = _T("sag.arachne.core");
 
-	if (!hService)
-	{
-		DWORD errCode = GetLastError();
-		char *errText;
+		auto hService = CreateService(
+			hSCManager,
+			config.ServiceName_C(),
+			config.ServiceName_C(),
+			SERVICE_ALL_ACCESS,
+			SERVICE_WIN32_OWN_PROCESS,
+			SERVICE_DEMAND_START,
+			SERVICE_ERROR_NORMAL,
+			SERVICE_PATH,
+			nullptr, nullptr, nullptr, nullptr, nullptr);
 
-		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-			nullptr,
-			errCode,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			reinterpret_cast<LPTSTR>(&errText),
-			0,
-			nullptr);
+		if (!hService)
+		{
+			auto errCode = GetLastError();
+			char *errText;
 
-		_ERROR << "Create service error!";
-		_ERROR << errText;
+			FormatMessage(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+				                              nullptr,
+				                              errCode,
+				                              MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				                              reinterpret_cast<LPTSTR>(&errText),
+				                              0,
+				                              nullptr);
 
-		CloseServiceHandle(hSCManager);
+			_ERROR << "Create service error!";
+			_ERROR << errText;
 
-		return -1;
-	}
+			CloseServiceHandle(hSCManager);
 
-	CloseServiceHandle(hService);
-	CloseServiceHandle(hSCManager);
+			return -1;
+		}
 
-	_INFO << "Create service success.";
-
-	return ERROR_SUCCESS;
-}
-
-int RemoveService()
-{
-	auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-	if (!hSCManager)
-	{
-		_ERROR << "Can't open Service Control Manager";
-		return -1;
-	}
-
-	auto hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
-
-	if (!hService)
-	{
-		_ERROR << "Can't remove service!";
-		CloseServiceHandle(hSCManager);
-		return -1;
-	}
-
-	DeleteService(hService);
-	CloseServiceHandle(hService);
-	CloseServiceHandle(hSCManager);
-
-	_INFO << "Service remove success.";
-	return ERROR_SUCCESS;
-}
-
-int StartService()
-{
-	auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-	if (!hSCManager)
-	{
-		_ERROR << "Can't open Service Control Manager";
-		return -1;
-	}
-
-	auto hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
-
-	if (!hService)
-	{
-		CloseServiceHandle(hSCManager);
-
-		_ERROR << "Can't start service!";
-		return -1;
-	}
-
-	if (!StartService(hService, 0, nullptr))
-	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCManager);
 
-		_ERROR << "Error starting service!";
-		return -1;
+		_INFO << "Create service success.";
+
+		return ERROR_SUCCESS;
 	}
 
-	CloseServiceHandle(hService);
-	CloseServiceHandle(hSCManager);
-
-	return ERROR_SUCCESS;
-}
-
-VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
-{
-	DWORD Status = E_FAIL;
-
-	g_StatusHandle = RegisterServiceCtrlHandler(LPWSTR(config.ServiceName().c_str()), ServiceCtrlHandler);
-
-	if (g_StatusHandle == nullptr)
+	int RemoveService()
 	{
-		_ERROR << "Server start error! Is will be stopped!";
-		goto EXIT;
+		auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
+		if (!hSCManager)
+		{
+			_ERROR << "Can't open Service Control Manager";
+			return -1;
+		}
+
+		auto hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
+
+		if (!hService)
+		{
+			_ERROR << "Can't remove service!";
+			CloseServiceHandle(hSCManager);
+			return -1;
+		}
+
+		DeleteService(hService);
+		CloseServiceHandle(hService);
+		CloseServiceHandle(hSCManager);
+
+		_INFO << "Service remove success.";
+		return ERROR_SUCCESS;
 	}
 
-	// Tell the service controller we are starting
-	ZeroMemory(&g_ServiceStatus, sizeof(g_ServiceStatus));
-	g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-	g_ServiceStatus.dwControlsAccepted = 0;
-	g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
-	g_ServiceStatus.dwWin32ExitCode = 0;
-	g_ServiceStatus.dwServiceSpecificExitCode = 0;
-	g_ServiceStatus.dwCheckPoint = 0;
-
-	if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
+	int StartService()
 	{
-		//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
+		auto hSCManager = OpenSCManager(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
+		if (!hSCManager)
+		{
+			_ERROR << "Can't open Service Control Manager";
+			return -1;
+		}
+
+		auto hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_START);
+
+		if (!hService)
+		{
+			CloseServiceHandle(hSCManager);
+
+			_ERROR << "Can't start service!";
+			return -1;
+		}
+
+		if (!StartService(hService, 0, nullptr))
+		{
+			CloseServiceHandle(hService);
+			CloseServiceHandle(hSCManager);
+
+			_ERROR << "Error starting service!";
+			return -1;
+		}
+
+		CloseServiceHandle(hService);
+		CloseServiceHandle(hSCManager);
+
+		return ERROR_SUCCESS;
 	}
 
-	/*
-	* Perform tasks neccesary to start the service here
-	*/
-	//OutputDebugString(_T("My Sample Service: ServiceMain: Performing Service Start Operations"));
-
-	// Create stop event to wait on later.
-	g_ServiceStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-	if (g_ServiceStopEvent == nullptr)
+	VOID WINAPI ServiceMain(DWORD argc, LPTSTR *argv)
 	{
-		//OutputDebugString(_T("My Sample Service: ServiceMain: CreateEvent(g_ServiceStopEvent) returned error"));
+		DWORD Status = E_FAIL;
 
+		g_StatusHandle = RegisterServiceCtrlHandler(LPWSTR(config.ServiceName().c_str()), ServiceCtrlHandler);
+
+		if (g_StatusHandle == nullptr)
+		{
+			_ERROR << "Server start error! Is will be stopped!";
+			goto EXIT;
+		}
+
+		// Tell the service controller we are starting
+		ZeroMemory(&g_ServiceStatus, sizeof(g_ServiceStatus));
+		g_ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
 		g_ServiceStatus.dwControlsAccepted = 0;
-		g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
-		g_ServiceStatus.dwWin32ExitCode = GetLastError();
-		g_ServiceStatus.dwCheckPoint = 1;
+		g_ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+		g_ServiceStatus.dwWin32ExitCode = 0;
+		g_ServiceStatus.dwServiceSpecificExitCode = 0;
+		g_ServiceStatus.dwCheckPoint = 0;
 
 		if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
 		{
 			//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
 		}
-		goto EXIT;
-	}
-
-	// Tell the service controller we are started
-	g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;
-	g_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
-	g_ServiceStatus.dwWin32ExitCode = 0;
-	g_ServiceStatus.dwCheckPoint = 0;
-
-	if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
-	{
-		//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
-	}
-
-	// Start the thread that will perform the main task of the service
-	HANDLE hThread = CreateThread(nullptr, 0, ServiceWorkerThread, nullptr, 0, nullptr);
-	// Wait until our worker thread exits effectively signaling that the service needs to stop
-	WaitForSingleObject(hThread, INFINITE);
-
-
-	/*
-	* Perform any cleanup tasks
-	*/
-
-	CloseHandle(g_ServiceStopEvent);
-
-	g_ServiceStatus.dwControlsAccepted = 0;
-	g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
-	g_ServiceStatus.dwWin32ExitCode = 0;
-	g_ServiceStatus.dwCheckPoint = 3;
-
-	if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
-	{
-		//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
-	}
-
-EXIT:
-
-	return;
-}
-
-
-VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
-{
-
-	switch (CtrlCode)
-	{
-	case SERVICE_CONTROL_STOP:
-
-		_INFO << "Server stop request. Service will be stopped...";
-
-		if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
-			break;
 
 		/*
-		* Perform tasks neccesary to stop the service here
+		* Perform tasks neccesary to start the service here
 		*/
+		//OutputDebugString(_T("My Sample Service: ServiceMain: Performing Service Start Operations"));
 
-		g_ServiceStatus.dwControlsAccepted = 0;
-		g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+		// Create stop event to wait on later.
+		g_ServiceStopEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		if (g_ServiceStopEvent == nullptr)
+		{
+			//OutputDebugString(_T("My Sample Service: ServiceMain: CreateEvent(g_ServiceStopEvent) returned error"));
+
+			g_ServiceStatus.dwControlsAccepted = 0;
+			g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+			g_ServiceStatus.dwWin32ExitCode = GetLastError();
+			g_ServiceStatus.dwCheckPoint = 1;
+
+			if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
+			{
+				//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
+			}
+			goto EXIT;
+		}
+
+		// Tell the service controller we are started
+		g_ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+		g_ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 		g_ServiceStatus.dwWin32ExitCode = 0;
-		g_ServiceStatus.dwCheckPoint = 4;
+		g_ServiceStatus.dwCheckPoint = 0;
 
 		if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
 		{
-			//OutputDebugString(_T("My Sample Service: ServiceCtrlHandler: SetServiceStatus returned error"));
+			//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
 		}
 
-		// This will signal the worker thread to start shutting down
-		SetEvent(g_ServiceStopEvent);
+		// Start the thread that will perform the main task of the service
+		HANDLE hThread = CreateThread(nullptr, 0, ServiceWorkerThread, nullptr, 0, nullptr);
+		// Wait until our worker thread exits effectively signaling that the service needs to stop
+		WaitForSingleObject(hThread, INFINITE);
 
-		break;
 
-	default:
-		break;
+		/*
+		* Perform any cleanup tasks
+		*/
+
+		CloseHandle(g_ServiceStopEvent);
+
+		g_ServiceStatus.dwControlsAccepted = 0;
+		g_ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+		g_ServiceStatus.dwWin32ExitCode = 0;
+		g_ServiceStatus.dwCheckPoint = 3;
+
+		if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
+		{
+			//OutputDebugString(_T("My Sample Service: ServiceMain: SetServiceStatus returned error"));
+		}
+
+	EXIT:
+
+		return;
 	}
 
-	//OutputDebugString(_T("My Sample Service: ServiceCtrlHandler: Exit"));
-}
 
-
-DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
-{
-
-	_INFO << "main worker is running...";
-
-	// Start the thread that will perform the main task of the service
-	CreateThread(nullptr, 0, MAINDBExchangeWorker, nullptr, 0, nullptr);
-	// Start the thread that will perform the main task of the service
-	CreateThread(nullptr, 0, PLCExchangeWorker, nullptr, 0, nullptr);
-	//  Periodically check if the service has been requested to stop
-	while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+	VOID WINAPI ServiceCtrlHandler(DWORD CtrlCode)
 	{
 
-		_INFO << "main worker is working...";
+		switch (CtrlCode)
+		{
+		case SERVICE_CONTROL_STOP:
 
-		Sleep(50);
+			_INFO << "Server stop request. Service will be stopped...";
+
+			if (g_ServiceStatus.dwCurrentState != SERVICE_RUNNING)
+				break;
+
+			/*
+			* Perform tasks neccesary to stop the service here
+			*/
+
+			g_ServiceStatus.dwControlsAccepted = 0;
+			g_ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+			g_ServiceStatus.dwWin32ExitCode = 0;
+			g_ServiceStatus.dwCheckPoint = 4;
+
+			if (SetServiceStatus(g_StatusHandle, &g_ServiceStatus) == FALSE)
+			{
+				//OutputDebugString(_T("My Sample Service: ServiceCtrlHandler: SetServiceStatus returned error"));
+			}
+
+			// This will signal the worker thread to start shutting down
+			SetEvent(g_ServiceStopEvent);
+
+			break;
+
+		default:
+			break;
+		}
+
+		//OutputDebugString(_T("My Sample Service: ServiceCtrlHandler: Exit"));
 	}
 
-	_INFO << "main worker exit...";
 
-	return ERROR_SUCCESS;
-}
-
-
-DWORD WINAPI PLCExchangeWorker(LPVOID lpParam)
-{
-
-	_INFO << "PLC exchange worker is running...";
-
-	while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+	DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 	{
 
-		_INFO << "PLC exchanger is working...";
+		_INFO << "main worker is running...";
 
-		Sleep(config.PLCPollPeriodMSec());
+		// Start the thread that will perform the main task of the service
+		CreateThread(nullptr, 0, MAINDBExchangeWorker, nullptr, 0, nullptr);
+		// Start the thread that will perform the main task of the service
+		CreateThread(nullptr, 0, PLCExchangeWorker, nullptr, 0, nullptr);
+		//  Periodically check if the service has been requested to stop
+		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+		{
+
+			_INFO << "main worker is working...";
+
+			Sleep(50);
+		}
+
+		_INFO << "main worker exit...";
+
+		return ERROR_SUCCESS;
 	}
 
-	_INFO << "PLC exchange worker exit...";
 
-	return ERROR_SUCCESS;
-}
-
-DWORD WINAPI MAINDBExchangeWorker(LPVOID lpParam)
-{
-
-	_INFO << "MainDB worker is running...";
-
-	while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+	DWORD WINAPI PLCExchangeWorker(LPVOID lpParam)
 	{
 
-		_INFO << "MainDB exchanger is working...";
+		_INFO << "PLC exchange worker is running...";
 
-		Sleep(config.MainDBPollPeriodMSec());
+		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+		{
+
+			_INFO << "PLC exchanger is working...";
+
+			Sleep(config.PLCPollPeriodMSec());
+		}
+
+		_INFO << "PLC exchange worker exit...";
+
+		return ERROR_SUCCESS;
 	}
 
-	_INFO << "MainDB worker exit...";
+	DWORD WINAPI MAINDBExchangeWorker(LPVOID lpParam)
+	{
 
-	return ERROR_SUCCESS;
-}
+		_INFO << "MainDB worker is running...";
+
+		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
+		{
+
+			_INFO << "MainDB exchanger is working...";
+
+			Sleep(config.MainDBPollPeriodMSec());
+		}
+
+		_INFO << "MainDB worker exit...";
+
+		return ERROR_SUCCESS;
+	}

@@ -1,41 +1,40 @@
 #pragma once
 
 #include "stdafx.h"
-#include <atlbase.h>
 
 #include "../tinyxml/tinyxml.h"
-#include <string>
+
 #pragma comment (lib, "../tinyxml/tinyxml.lib")
 
 struct LoggerParameters {
-	std::string LogFileExtention = "_%3N.log";
-	std::string LogName;
-	std::string LogFilePath;
-	std::string ArchivePath;
-	std::string LogFileName;
+	std::basic_string<char> LogFileExtention = "_%3N.log";
+	std::basic_string<char> LogName;
+	std::basic_string<char> LogFilePath;
+	std::basic_string<char> ArchivePath;
+	std::basic_string<char> LogFileName;
 	int LogRotateSizeMB = 5;
 	int ArchiveSizeMB = 50;
 	int MinDriveFreeSpace = 100;
 };
 
 struct PLCParameters {
-	PLC_TYPES PLCType = PLC_TYPES::AUTODETECT;
+	PLC_TYPES PLCType = AUTODETECT;
 	int PLCPortNumber;
-	std::string PLCIPAddress;
+	std::basic_string<char> PLCIPAddress;
 	int PLCPollPeriodMSec;
 };
 
 struct LocalDBParameters {
 	DB_TYPES LocalDBType;
-	std::string LocalDBPath;
-	std::string TrendsDBFileName;
-	std::string MessagesDBFileName;
-	std::string DictionariesDBFileName;
-	std::string SecretsDBFileName;
+	std::basic_string<char> LocalDBPath;
+	std::basic_string<char> TrendsDBFileName;
+	std::basic_string<char> MessagesDBFileName;
+	std::basic_string<char> DictionariesDBFileName;
+	std::basic_string<char> SecretsDBFileName;
 };
 
 struct MainDBParameters {
-	std::string MainDBConnectionString;
+	std::basic_string<char> MainDBConnectionString;
 	int MainDBPollPeriodMSec;
 };
 
@@ -45,207 +44,254 @@ private:
 
 	TCHAR *SERVICE_PATH = nullptr;
 
-	std::string _path;
-	SERVICE_TYPES _service_type;
-	int _service_control_port;
-	std::string _service_name;
-	TCHAR _service_name_c;
-	const std::string _config_file_name = "core.config";
+	std::basic_string<char> path_;
+	SERVICE_TYPES service_type_;
+	int service_control_port_;
+	std::basic_string<char> service_name_;
+	wchar_t* service_name_c_;
+	const std::basic_string<char> config_file_name_ = "core.config";
 
-	LoggerParameters _logger;
-	PLCParameters _plc;
-	LocalDBParameters _localdb;
-	MainDBParameters _maindb;
+	LoggerParameters logger_;
+	PLCParameters plc_;
+	LocalDBParameters local_db_;
+	MainDBParameters main_db_;
 
-	bool _is_loaded = false;
+	bool is_loaded_ = false;
 
 public:
 
 	/* CONFIG */
-	bool IsLoaded() const { return _is_loaded; };
+	bool IsLoaded() const;;
 
 	/* SERVICE */
-	std::string ServicePath() const { return _path; };
-	std::string ServiceName() const { return _service_name; }
-	TCHAR
+	std::basic_string<char> ServicePath() const;
+	std::basic_string<char> ServiceName() const;
+	LPCWSTR ServiceName_C() const;
 
 	/* LOGGER */
-	std::string LogName() const { return _logger.LogName; };
-	std::string LogFile() const { return _logger.LogFilePath + _logger.LogFileName; };
-	std::string ArchivePath() const { return _logger.ArchivePath; };
+	std::basic_string<char> LogName() const;;
+	std::basic_string<char> LogFile() const;;
+	std::basic_string<char> ArchivePath() const;;
 
-	int RotateSizeMB() const { return _logger.LogRotateSizeMB; };
-	int ArchiveSizeMB() const { return _logger.ArchiveSizeMB; };
-	int MinDriveFreeSpace() const { return _logger.MinDriveFreeSpace; };
+	int RotateSizeMB() const;;
+	int ArchiveSizeMB() const;;
+	int MinDriveFreeSpace() const;;
 
 	/* PLC */
-	int PLCPollPeriodMSec() const { return _plc.PLCPollPeriodMSec; };
+	int PLCPollPeriodMSec() const;;
 
 	/* MAINDB */
-	int MainDBPollPeriodMSec() const { return _maindb.MainDBPollPeriodMSec; };
+	int MainDBPollPeriodMSec() const;;
 
-	Configurator(): _service_type(SERVICE_TYPES::ARACHNE_NODE), _service_control_port(5555), _service_name_c(), _is_loaded(false), string(0)
+	Configurator();
+
+	bool LoadConfig(int argc, wchar_t* argv[], wchar_t* env[]);
+
+	~Configurator();
+};
+
+inline bool Configurator::IsLoaded() const
+{
+	return is_loaded_;
+}
+
+inline std::basic_string<char> Configurator::ServicePath() const
+{
+	return path_;
+}
+
+inline std::basic_string<char> Configurator::ServiceName() const
+{
+	return service_name_;
+}
+
+inline const wchar_t* Configurator::ServiceName_C() const
+{
+	return service_name_c_;
+}
+
+inline std::basic_string<char> Configurator::LogName() const
+{
+	return logger_.LogName;
+}
+
+inline std::basic_string<char> Configurator::LogFile() const
+{
+	return logger_.LogFilePath + logger_.LogFileName;
+}
+
+inline std::basic_string<char> Configurator::ArchivePath() const
+{
+	return logger_.ArchivePath;
+}
+
+inline int Configurator::RotateSizeMB() const
+{
+	return logger_.LogRotateSizeMB;
+}
+
+inline int Configurator::ArchiveSizeMB() const
+{
+	return logger_.ArchiveSizeMB;
+}
+
+inline int Configurator::MinDriveFreeSpace() const
+{
+	return logger_.MinDriveFreeSpace;
+}
+
+inline int Configurator::PLCPollPeriodMSec() const
+{
+	return plc_.PLCPollPeriodMSec;
+}
+
+inline int Configurator::MainDBPollPeriodMSec() const
+{
+	return main_db_.MainDBPollPeriodMSec;
+}
+
+inline Configurator::Configurator(): service_type_(SERVICE_TYPES::ARACHNE_NODE), service_control_port_(5555), service_name_(), service_name_c_(), is_loaded_(false)
+{
+}
+
+inline bool Configurator::LoadConfig(int argc, wchar_t* argv[], wchar_t* env[])
+{
+	wchar_t szFileName[MAX_PATH];
+	wchar_t szPath[MAX_PATH];
+
+	GetModuleFileName(nullptr, szFileName, MAX_PATH);
+	ExtractFilePath(szFileName, szPath);
+
+	std::basic_string<wchar_t> buff = szPath;
+
+	path_ = std::basic_string<char>(buff.begin(), buff.end());
+
+	auto configFile = path_ + config_file_name_;
+
+	TiXmlDocument config(configFile.c_str());
+
+	if (!config.Error() && config.LoadFile(TIXML_ENCODING_UTF8))
 	{
-	}
-
-	bool LoadConfig(int argc, TCHAR *argv[], TCHAR *env[])
-	{
-
-		TCHAR szFileName[MAX_PATH];
-		TCHAR szPath[MAX_PATH];
-
-		GetModuleFileName(nullptr, szFileName, MAX_PATH);
-		ExtractFilePath(szFileName, szPath);
-
-		std::wstring buff = szPath;
-
-		_path = std::string(buff.begin(), buff.end());
-
-		std::string configFile = _path + _config_file_name;
-
-		TiXmlDocument config(configFile.c_str());
-
-		if (!config.Error())
+		try
 		{
-			if (config.LoadFile(TIXML_ENCODING_UTF8))
-			{
-				try
+			auto service = config.FirstChildElement("service");
+
+			if (service)
+				switch (static_cast<SERVICE_TYPES>(atoi(service->Attribute("type"))))
 				{
-					auto service = config.FirstChildElement("service");
+				case SERVICE_TYPES::ARACHNE_NODE:
+					goto EXIT;
 
-					if (service)
+					break;
+				case SERVICE_TYPES::ARACHNE_PLC_CONTROL:
+
+					service_name_ = service->Attribute("name");
+
+					if (!service_name_.empty())
 					{
-						switch (static_cast<SERVICE_TYPES>(atoi(service->Attribute("type")))) {
 
-						case SERVICE_TYPES::ARACHNE_NODE:
-							goto EXIT;
+						const auto service_name_length = (service_name_.length() + 1);
 
-							break;
-						case SERVICE_TYPES::ARACHNE_PLC_CONTROL:
+						service_name_c_ = new wchar_t[service_name_length];
 
-							_service_name = service->Attribute("name");
-							//_service_name_c = new TCHAR[_service_name.size() + 1];
+						size_t converted_chars = 0;
 
+						mbstowcs_s(&converted_chars, service_name_c_, service_name_length, service_name_.c_str(), _TRUNCATE);
 
-							if (!_service_name.empty())
+						service_type_ = static_cast<SERVICE_TYPES>(atoi(service->Attribute("type")));
+						service_control_port_ = atoi(service->Attribute("command_port"));
+
+						auto logger = service->FirstChildElement("log");
+						if (logger)
+						{
+							logger_.LogName = service_name_;
+
+							logger_.LogFileExtention = logger->Attribute("file_extension_pattern");
+
+							std::basic_string<char> _buff = logger->Attribute("alter_file_name");
+
+							!_buff.empty() ? logger_.LogFileName = _buff : logger_.LogFileName = logger_.LogName + logger_.LogFileExtention;
+
+							_buff = logger->Attribute("alter_path");
+
+							!_buff.empty() ? _buff.substr(0, 2) == ".\\" ? logger_.LogFilePath = path_ + _buff.substr(2, _buff.length()) : logger_.LogFilePath = _buff : logger_.LogFilePath = path_;
+
+							logger_.LogRotateSizeMB = atoi(logger->Attribute("file_size_mb"));
+							logger_.ArchiveSizeMB = atoi(logger->Attribute("archive_size_mb"));
+							logger_.MinDriveFreeSpace = atoi(logger->Attribute("min_drive_free_space_mb"));
+
+							logger_.ArchivePath = logger->Attribute("archive_path");
+
+							auto plc = service->FirstChildElement("plc");
+							if (plc)
 							{
-								_service_type = SERVICE_TYPES::ARACHNE_PLC_CONTROL;
-								_service_control_port = atoi(service->Attribute("command_port"));
+								plc_.PLCType = static_cast<PLC_TYPES>(atoi(plc->Attribute("type")));
+								plc_.PLCPollPeriodMSec = atoi(plc->Attribute("poll_period_msec"));
+								plc_.PLCPortNumber = atoi(plc->Attribute("port"));
+								plc_.PLCIPAddress = plc->Attribute("ip_address");
 
-								auto logger = service->FirstChildElement("log");
-								if (logger)
+								auto localdb = service->FirstChildElement("localdb");
+								if (localdb)
 								{
-									_logger.LogName = _service_name;
+									local_db_.LocalDBType = static_cast<DB_TYPES>(atoi(localdb->Attribute("type")));
 
-									_logger.LogFileExtention = logger->Attribute("file_extension_pattern");
-
-									std::string _buff = logger->Attribute("alter_file_name");
-									if (!_buff.empty()) {
-										_logger.LogFileName = _buff;
-									}
-									else _logger.LogFileName = _logger.LogName + _logger.LogFileExtention;
-
-									_buff.clear();
-									_buff = logger->Attribute("alter_path");
-									if (!_buff.empty()) {
-										if (_buff.substr(0, 2) == ".\\") {
-											_logger.LogFilePath = _path + _buff.substr(2, _buff.length());
-										}
-										else _logger.LogFilePath = _buff;
-									}
-									else _logger.LogFilePath = _path;
-
-									_logger.LogRotateSizeMB = atoi(logger->Attribute("file_size_mb"));
-									_logger.ArchiveSizeMB = atoi(logger->Attribute("archive_size_mb")); 
-									_logger.MinDriveFreeSpace = atoi(logger->Attribute("min_drive_free_space_mb"));
-
-									_logger.ArchivePath = logger->Attribute("archive_path");
-
-									auto plc = service->FirstChildElement("plc");
-									if (plc)
+									switch (static_cast<DB_TYPES>(atoi(localdb->Attribute("type"))))
 									{
-										_plc.PLCType = static_cast<PLC_TYPES>(atoi(plc->Attribute("type")));
-										_plc.PLCPollPeriodMSec = atoi(plc->Attribute("poll_period_msec"));
-										_plc.PLCPortNumber = atoi(plc->Attribute("port"));
-										_plc.PLCIPAddress = plc->Attribute("ip_address");
+									case DB_TYPES::DB_ORACLE:
+										goto EXIT;
 
-										auto localdb = service->FirstChildElement("localdb");
-										if (localdb)
+										break;
+
+									case DB_TYPES::DB_MSSQL:
+										goto EXIT;
+
+										break;
+
+									case DB_TYPES::DB_SQLITE:
+
+										_buff = localdb->Attribute("alter_path");
+
+										!_buff.empty() ? _buff.substr(0, 2) == ".\\" ? local_db_.LocalDBPath = path_ + _buff.substr(2, _buff.length()) : local_db_.LocalDBPath = _buff : local_db_.LocalDBPath = path_;
+
+										local_db_.DictionariesDBFileName = local_db_.LocalDBPath + localdb->Attribute("dictionaries");
+										local_db_.MessagesDBFileName = local_db_.LocalDBPath + localdb->Attribute("messages");
+										local_db_.SecretsDBFileName = local_db_.LocalDBPath + localdb->Attribute("secrets");
+										local_db_.TrendsDBFileName = local_db_.LocalDBPath + localdb->Attribute("trends");
+
+										break;
+									default:
+										goto EXIT;
+									}
+
+									auto maindb = service->FirstChildElement("maindb");
+									if (maindb)
+									{
+										switch (static_cast<DB_TYPES>(atoi(maindb->Attribute("type"))))
 										{
+										case DB_TYPES::DB_ORACLE:
 
-											_localdb.LocalDBType = static_cast<DB_TYPES>(atoi(localdb->Attribute("type")));
+											main_db_.MainDBConnectionString = maindb->Attribute("conn_string");
+											main_db_.MainDBPollPeriodMSec = atoi(maindb->Attribute("poll_period_msec"));
 
-											switch (static_cast<DB_TYPES>(atoi(localdb->Attribute("type")))) {
+											break;
 
-											case DB_TYPES::DB_ORACLE:
-												goto EXIT;
+										case DB_TYPES::DB_MSSQL:
 
-												break;
+											main_db_.MainDBConnectionString = maindb->Attribute("conn_string");
+											main_db_.MainDBPollPeriodMSec = atoi(maindb->Attribute("poll_period_msec"));
 
-											case DB_TYPES::DB_MSSQL:
-												goto EXIT;
+											break;
 
-												break;
+										case DB_TYPES::DB_SQLITE:
+											goto EXIT;
 
-											case DB_TYPES::DB_SQLITE:
-
-												_buff.clear();
-												_buff = localdb->Attribute("alter_path");
-												if (!_buff.empty()) {
-													if (_buff.substr(0, 2) == ".\\") {
-														_localdb.LocalDBPath = _path + _buff.substr(2, _buff.length());
-													}
-													else _localdb.LocalDBPath = _buff;
-												}
-												else _localdb.LocalDBPath = _path;
-
-												_localdb.DictionariesDBFileName = _localdb.LocalDBPath + localdb->Attribute("dictionaries");
-												_localdb.MessagesDBFileName = _localdb.LocalDBPath + localdb->Attribute("messages");
-												_localdb.SecretsDBFileName = _localdb.LocalDBPath + localdb->Attribute("secrets");
-												_localdb.TrendsDBFileName = _localdb.LocalDBPath + localdb->Attribute("trends");
-
-												break;
-											default:
-												goto EXIT;
-											}
-
-											auto maindb = service->FirstChildElement("maindb");
-											if (maindb)
-											{
-												switch (static_cast<DB_TYPES>(atoi(maindb->Attribute("type")))) {
-
-												case DB_TYPES::DB_ORACLE:
-
-													_maindb.MainDBConnectionString = maindb->Attribute("conn_string");
-													_maindb.MainDBPollPeriodMSec = atoi(maindb->Attribute("poll_period_msec"));
-
-													break;
-
-												case DB_TYPES::DB_MSSQL:
-													goto EXIT;
-
-													break;
-
-												case DB_TYPES::DB_SQLITE:
-													goto EXIT;
-
-													break;
-												default:
-													goto EXIT;
-												}
-
-												_is_loaded = true;
-												return _is_loaded;
-											}
-											else
-											{
-												goto EXIT;
-											}
-										}
-										else
-										{
+											break;
+										default:
 											goto EXIT;
 										}
+
+										is_loaded_ = true;
+										return is_loaded_;
 									}
 									else
 									{
@@ -261,44 +307,48 @@ public:
 							{
 								goto EXIT;
 							}
-
-							break;
-						case SERVICE_TYPES::ARACHNE_WEIGHT_CONTROL:
-							goto EXIT;
-
-							break;
-						case SERVICE_TYPES::ARACHNE_TERMAL_CONTROL:
-							goto EXIT;
-
-							break;
-						case SERVICE_TYPES::ARACHNE_BUZZER_CONTROL:
-							goto EXIT;
-
-							break;
-						default:
+						}
+						else
+						{
 							goto EXIT;
 						}
-
 					}
-					else goto EXIT;
-				}
-				catch (...)
-				{
+					else
+					{
+						goto EXIT;
+					}
+
+					break;
+				case SERVICE_TYPES::ARACHNE_WEIGHT_CONTROL:
+					goto EXIT;
+
+					break;
+				case SERVICE_TYPES::ARACHNE_TERMAL_CONTROL:
+					goto EXIT;
+
+					break;
+				case SERVICE_TYPES::ARACHNE_BUZZER_CONTROL:
+					goto EXIT;
+
+					break;
+				case ARACHNE_PLC_EXCHANGER: break;
+				default:
 					goto EXIT;
 				}
-			}
+			else goto EXIT;
 		}
-
-	EXIT:
-		_is_loaded = false;
-		return _is_loaded;
-
-		//WRITELOG(logger, framework::Diagnostics::LogLevel::Info, _T("Config is cuccessfully loaded... try to parse..."));
-		//WRITELOG(logger, framework::Diagnostics::LogLevel::Info, LPWSTR(config.Value()));
+		catch (...)
+		{
+			goto EXIT;
+		}
 	}
 
-	~Configurator()
-	{
-	}
-};
+EXIT:
+	is_loaded_ = false;
+	return is_loaded_;
+}
+
+inline Configurator::~Configurator()
+{
+}
 
