@@ -122,7 +122,7 @@ public:
 						case SERVICE_TYPES::ARACHNE_PLC_CONTROL:
 
 							_service_name = service->Attribute("name");
-							_service_name_c = new TCHAR[_service_name.size() + 1];
+							//_service_name_c = new TCHAR[_service_name.size() + 1];
 
 
 							if (!_service_name.empty())
