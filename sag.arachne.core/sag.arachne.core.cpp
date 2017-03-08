@@ -234,7 +234,7 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 	{
 		DWORD Status = E_FAIL;
 
-		g_StatusHandle = RegisterServiceCtrlHandler(LPWSTR(config.ServiceName().c_str()), ServiceCtrlHandler);
+		g_StatusHandle = RegisterServiceCtrlHandler(config.ServiceName_C(), ServiceCtrlHandler);
 
 		if (g_StatusHandle == nullptr)
 		{

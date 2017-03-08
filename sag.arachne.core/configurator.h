@@ -69,19 +69,19 @@ public:
 	LPCWSTR ServiceName_C() const;
 
 	/* LOGGER */
-	std::basic_string<char> LogName() const;;
-	std::basic_string<char> LogFile() const;;
-	std::basic_string<char> ArchivePath() const;;
+	std::basic_string<char> LogName() const;
+	std::basic_string<char> LogFile() const;
+	std::basic_string<char> ArchivePath() const;
 
-	int RotateSizeMB() const;;
-	int ArchiveSizeMB() const;;
-	int MinDriveFreeSpace() const;;
+	int RotateSizeMB() const;
+	int ArchiveSizeMB() const;
+	int MinDriveFreeSpace() const;
 
 	/* PLC */
-	int PLCPollPeriodMSec() const;;
+	int PLCPollPeriodMSec() const;
 
 	/* MAINDB */
-	int MainDBPollPeriodMSec() const;;
+	int MainDBPollPeriodMSec() const;
 
 	Configurator();
 
