@@ -47,6 +47,7 @@ private:
 	SERVICE_TYPES _service_type;
 	int _service_control_port;
 	std::string _service_name;
+	TCHAR _service_name_c;
 	const std::string _config_file_name = "core.config";
 
 	LoggerParameters _logger;
@@ -121,6 +122,8 @@ public:
 						case SERVICE_TYPES::ARACHNE_PLC_CONTROL:
 
 							_service_name = service->Attribute("name");
+							_service_name_c = new TCHAR[_service_name.size() + 1];
+
 
 							if (!_service_name.empty())
 							{

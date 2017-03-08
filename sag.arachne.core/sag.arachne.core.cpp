@@ -127,10 +127,14 @@ int InstallService()
 		return -1;
 	}
 
+	//TCHAR buf[] = TEXT("sag.arachne.core");
+	//TCHAR buf[] = TEXT(config.ServiceName().begin(), config.ServiceName().end());
+	TCHAR buf[] = _T("sag.arachne.core");
+
 	SC_HANDLE hService = CreateService(
 		hSCManager,
-		_T("sag.arachne.core"),//LPTSTR((config.ServiceName()).c_str()),
-		_T("sag.arachne.core"),//LPTSTR((config.ServiceName()).c_str()),
+		buf,
+		buf,
 		SERVICE_ALL_ACCESS,
 		SERVICE_WIN32_OWN_PROCESS,
 		SERVICE_DEMAND_START,
@@ -177,7 +181,7 @@ int RemoveService()
 		return -1;
 	}
 
-	SC_HANDLE hService = OpenService(hSCManager, LPWSTR((config.ServiceName()).c_str()), SERVICE_STOP | DELETE);
+	SC_HANDLE hService = OpenService(hSCManager, _T("sag.arachne.core"), SERVICE_STOP | DELETE);
 
 	if (!hService)
 	{
