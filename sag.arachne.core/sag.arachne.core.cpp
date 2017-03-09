@@ -7,6 +7,7 @@
 #include "stdafx.h"
 #include "configurator.h"
 #include "logger.h"
+#include <minwinbase.h>
 
 using namespace std;
 
@@ -315,6 +316,14 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 
 	DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 	{
+
+		STARTUPINFO sif;
+		ZeroMemory(&sif, sizeof(STARTUPINFO));
+
+		PROCESS_INFORMATION pi;
+		//SECURITY_ATTRIBUTES sa;
+
+		CreateProcess(L"c:\\c++\\sag.arachne\\x64\\Debug\\sag.arachne.hwcontrol.exe", nullptr, nullptr, nullptr, true, HIGH_PRIORITY_CLASS, nullptr, nullptr, &sif, &pi);
 
 		_INFO << "main worker is starting...";
 

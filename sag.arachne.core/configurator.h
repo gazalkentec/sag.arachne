@@ -15,6 +15,7 @@ struct LoggerParameters {
 	int LogRotateSizeMB = 5;
 	int ArchiveSizeMB = 50;
 	int MinDriveFreeSpace = 100;
+	bool WriteConfigToLog = false;
 };
 
 struct PLCParameters {
@@ -83,6 +84,8 @@ public:
 	int ArchiveSizeMB() const;
 	int MinDriveFreeSpace() const;
 
+	bool WriteConfigToLog() const;
+
 	/* PLC */
 	int PLCPollPeriodMSec() const;
 
@@ -149,6 +152,11 @@ inline int Configurator::ArchiveSizeMB() const
 inline int Configurator::MinDriveFreeSpace() const
 {
 	return logger_.MinDriveFreeSpace;
+}
+
+inline bool Configurator::WriteConfigToLog() const
+{	
+	return logger_.WriteConfigToLog;
 }
 
 inline int Configurator::PLCPollPeriodMSec() const
@@ -222,6 +230,8 @@ inline bool Configurator::LoadConfig(int argc, wchar_t* argv[], wchar_t* env[])
 						if (logger)
 						{
 							logger_.LogName = service_name_;
+
+							logger_.WriteConfigToLog = !static_cast<bool>(std::strcmp(logger->Attribute("config_to_log"), "true"));
 
 							logger_.LogFileExtention = logger->Attribute("file_extension_pattern");
 
