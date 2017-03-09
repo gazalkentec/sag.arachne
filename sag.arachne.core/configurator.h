@@ -3,7 +3,6 @@
 #include "stdafx.h"
 
 #include "../tinyxml/tinyxml.h"
-#include <boost/fusion/iterator/prior.hpp>
 
 #pragma comment (lib, "../tinyxml/tinyxml.lib")
 
@@ -41,7 +40,7 @@ struct MainDBParameters {
 
 struct HardwareControllerParameters {
 	std::basic_string<char> FilePath;
-	std::basic_string<char> FileName;
+	std::basic_string<char> FileName = "sag.arachne.hwcontrol.exe";
 };
 
 class Configurator
@@ -311,8 +310,13 @@ inline bool Configurator::LoadConfig(int argc, wchar_t* argv[], wchar_t* env[])
 										auto hwcontrol = service->FirstChildElement("hwcontrol");
 										if(hwcontrol)
 										{
-											hw_controller_.FilePath = hwcontrol->Attribute("file_path");
-											hw_controller_.FileName = hwcontrol->Attribute("file_name");
+											_buff = hwcontrol->Attribute("alter_path");
+
+											!_buff.empty() ? _buff.substr(0, 2) == ".\\" ? hw_controller_.FilePath = path_ + _buff.substr(2, _buff.length()) : hw_controller_.FilePath = _buff : hw_controller_.FilePath = path_;
+
+											_buff = hwcontrol->Attribute("alter_file_name");
+
+											if (!_buff.empty()) hw_controller_.FileName = _buff;
 										}
 
 										is_loaded_ = true;

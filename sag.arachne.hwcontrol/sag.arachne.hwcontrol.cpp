@@ -5,13 +5,13 @@ int main()
 {
 	using namespace std;
 
-	std::cout << "hello" << std::endl;
+	cout << "hello" << endl;
 
 	auto i = 0;
 
-	std::cin >> i;
+	cin >> i;
 
-	std::cout << i << std::endl;
+	cout << i << endl;
 
     return 0;
 }
