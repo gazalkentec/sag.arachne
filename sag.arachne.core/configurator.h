@@ -3,6 +3,7 @@
 #include "stdafx.h"
 
 #include "../tinyxml/tinyxml.h"
+#include <boost/fusion/iterator/prior.hpp>
 
 #pragma comment (lib, "../tinyxml/tinyxml.lib")
 
@@ -38,6 +39,11 @@ struct MainDBParameters {
 	int MainDBPollPeriodMSec;
 };
 
+struct HardwareControllerParameters {
+	std::basic_string<char> FilePath;
+	std::basic_string<char> FileName;
+};
+
 class Configurator
 {
 private:
@@ -55,6 +61,7 @@ private:
 	PLCParameters plc_;
 	LocalDBParameters local_db_;
 	MainDBParameters main_db_;
+	HardwareControllerParameters hw_controller_;
 
 	bool is_loaded_ = false;
 
@@ -82,6 +89,11 @@ public:
 
 	/* MAINDB */
 	int MainDBPollPeriodMSec() const;
+
+	/* HARDWARE CONTROLLER */
+	std::basic_string<char> FileName() const;
+	std::basic_string<char> FilePath() const;
+
 
 	Configurator();
 
@@ -145,6 +157,16 @@ inline int Configurator::PLCPollPeriodMSec() const
 	return plc_.PLCPollPeriodMSec;
 }
 
+inline std::basic_string<char> Configurator::FileName() const
+{
+	return hw_controller_.FileName;
+}
+
+inline std::basic_string<char> Configurator::FilePath() const
+{
+	return hw_controller_.FilePath;
+}
+
 inline int Configurator::MainDBPollPeriodMSec() const
 {
 	return main_db_.MainDBPollPeriodMSec;
@@ -156,19 +178,15 @@ inline Configurator::Configurator(): service_type_(SERVICE_TYPES::ARACHNE_NODE),
 
 inline bool Configurator::LoadConfig(int argc, wchar_t* argv[], wchar_t* env[])
 {
-	wchar_t szFileName[MAX_PATH];
-	wchar_t szPath[MAX_PATH];
+	std::wstring full_path = argv[0];
+	const auto end_path= full_path.rfind('\\');
+	const auto config_path = full_path.substr(0, end_path + 1);
 
-	GetModuleFileName(nullptr, szFileName, MAX_PATH);
-	ExtractFilePath(szFileName, szPath);
+	path_ = std::basic_string<char>(config_path.begin(), config_path.end());
 
-	std::basic_string<wchar_t> buff = szPath;
+	auto config_file = path_ + config_file_name_;
 
-	path_ = std::basic_string<char>(buff.begin(), buff.end());
-
-	auto configFile = path_ + config_file_name_;
-
-	TiXmlDocument config(configFile.c_str());
+	TiXmlDocument config(config_file.c_str());
 
 	if (!config.Error() && config.LoadFile(TIXML_ENCODING_UTF8))
 	{
@@ -288,6 +306,13 @@ inline bool Configurator::LoadConfig(int argc, wchar_t* argv[], wchar_t* env[])
 											break;
 										default:
 											goto EXIT;
+										}
+
+										auto hwcontrol = service->FirstChildElement("hwcontrol");
+										if(hwcontrol)
+										{
+											hw_controller_.FilePath = hwcontrol->Attribute("file_path");
+											hw_controller_.FileName = hwcontrol->Attribute("file_name");
 										}
 
 										is_loaded_ = true;

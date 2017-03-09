@@ -39,6 +39,8 @@ int _tmain(int argc, wchar_t* argv[], wchar_t* env[])
 	_INFO << "Config is loaded successfully.";
 	else return -1;
 
+	//CreateProcess(L"sag.arachne.hwcontrol.exe", nullptr, nullptr, nullptr, )
+
 	if (argc - 1 == 0)
 	{
 		SERVICE_TABLE_ENTRY ServiceTable[] =
